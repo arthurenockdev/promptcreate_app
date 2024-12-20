@@ -1,29 +1,45 @@
 import React, { useState, useEffect } from 'react';
+import { Switch } from '~/components/ui/Switch';
 import { toast } from 'react-toastify';
 import Cookies from 'js-cookie';
 import { logStore } from '~/lib/stores/logs';
 
-interface GitHubUserResponse {
+type GitHubUserResponse = {
   login: string;
-  id: number;
-  [key: string]: any; // for other properties we don't explicitly need
-}
+};
+
+type VercelUserResponse = {
+  user: {
+    username: string;
+  };
+};
 
 export default function ConnectionsTab() {
+  // GitHub state
   const [githubUsername, setGithubUsername] = useState(Cookies.get('githubUsername') || '');
   const [githubToken, setGithubToken] = useState(Cookies.get('githubToken') || '');
-  const [isConnected, setIsConnected] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [isGithubConnected, setIsGithubConnected] = useState(false);
+  const [isGithubVerifying, setIsGithubVerifying] = useState(false);
+
+  // Vercel state
+  const [vercelToken, setVercelToken] = useState(Cookies.get('vercelToken') || '');
+  const [isVercelConnected, setIsVercelConnected] = useState(false);
+  const [isVercelVerifying, setIsVercelVerifying] = useState(false);
 
   useEffect(() => {
-    // Check if credentials exist and verify them
+    // Check GitHub credentials
     if (githubUsername && githubToken) {
       verifyGitHubCredentials();
     }
+    // Check Vercel credentials
+    if (vercelToken) {
+      verifyVercelCredentials();
+    }
   }, []);
 
+  // GitHub verification
   const verifyGitHubCredentials = async () => {
-    setIsVerifying(true);
+    setIsGithubVerifying(true);
 
     try {
       const response = await fetch('https://api.github.com/user', {
@@ -36,31 +52,59 @@ export default function ConnectionsTab() {
         const data = (await response.json()) as GitHubUserResponse;
 
         if (data.login === githubUsername) {
-          setIsConnected(true);
+          setIsGithubConnected(true);
           return true;
         }
       }
 
-      setIsConnected(false);
-
+      setIsGithubConnected(false);
       return false;
     } catch (error) {
       console.error('Error verifying GitHub credentials:', error);
-      setIsConnected(false);
-
+      setIsGithubConnected(false);
       return false;
     } finally {
-      setIsVerifying(false);
+      setIsGithubVerifying(false);
     }
   };
 
-  const handleSaveConnection = async () => {
+  // Vercel verification
+  const verifyVercelCredentials = async () => {
+    setIsVercelVerifying(true);
+
+    try {
+      const response = await fetch('https://api.vercel.com/v2/user', {
+        headers: {
+          Authorization: `Bearer ${vercelToken}`,
+        },
+      });
+
+      if (response.ok) {
+        const data = (await response.json()) as VercelUserResponse;
+        if (data.user.username) {
+          setIsVercelConnected(true);
+          return true;
+        }
+      }
+
+      setIsVercelConnected(false);
+      return false;
+    } catch (error) {
+      
+      setIsVercelConnected(false);
+      return false;
+    } finally {
+      setIsVercelVerifying(false);
+    }
+  };
+
+  const handleGitHubSaveConnection = async () => {
     if (!githubUsername || !githubToken) {
       toast.error('Please provide both GitHub username and token');
       return;
     }
 
-    setIsVerifying(true);
+    setIsGithubVerifying(true);
 
     const isValid = await verifyGitHubCredentials();
 
@@ -73,78 +117,149 @@ export default function ConnectionsTab() {
       });
       toast.success('GitHub credentials verified and saved successfully!');
       Cookies.set('git:github.com', JSON.stringify({ username: githubToken, password: 'x-oauth-basic' }));
-      setIsConnected(true);
+      setIsGithubConnected(true);
     } else {
       toast.error('Invalid GitHub credentials. Please check your username and token.');
     }
   };
 
-  const handleDisconnect = () => {
+  const handleVercelSaveConnection = async () => {
+    if (!vercelToken) {
+      toast.error('Please provide a Vercel token');
+      return;
+    }
+
+    setIsVercelVerifying(true);
+
+    const isValid = await verifyVercelCredentials();
+
+    if (isValid) {
+      Cookies.set('vercelToken', vercelToken);
+      logStore.logSystem('Vercel connection settings updated', {
+        hasToken: !!vercelToken,
+      });
+      toast.success('Vercel credentials verified and saved successfully!');
+      setIsVercelConnected(true);
+    } else {
+      toast.error('Invalid Vercel token. Please check your token.');
+    }
+  };
+
+  const handleGitHubDisconnect = () => {
     Cookies.remove('githubUsername');
     Cookies.remove('githubToken');
     Cookies.remove('git:github.com');
     setGithubUsername('');
     setGithubToken('');
-    setIsConnected(false);
+    setIsGithubConnected(false);
     logStore.logSystem('GitHub connection removed');
     toast.success('GitHub connection removed successfully!');
   };
 
+  const handleVercelDisconnect = () => {
+    Cookies.remove('vercelToken');
+    setVercelToken('');
+    setIsVercelConnected(false);
+    logStore.logSystem('Vercel connection removed');
+    toast.success('Vercel connection removed successfully!');
+  };
+
   return (
-    <div className="p-4 mb-4 border border-bolt-elements-borderColor rounded-lg bg-bolt-elements-background-depth-3">
-      <h3 className="text-lg font-medium text-bolt-elements-textPrimary mb-4">GitHub Connection</h3>
-      <div className="flex mb-4">
-        <div className="flex-1 mr-2">
-          <label className="block text-sm text-bolt-elements-textSecondary mb-1">GitHub Username:</label>
-          <input
-            type="text"
-            value={githubUsername}
-            onChange={(e) => setGithubUsername(e.target.value)}
-            disabled={isVerifying}
-            className="w-full bg-white dark:bg-bolt-elements-background-depth-4 relative px-2 py-1.5 rounded-md focus:outline-none placeholder-bolt-elements-textTertiary text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary border border-bolt-elements-borderColor disabled:opacity-50"
-          />
+    <div className="space-y-6">
+      {/* GitHub Connection Section */}
+      <div className="p-4 border border-bolt-elements-borderColor rounded-lg bg-bolt-elements-background-depth-3">
+        <h3 className="text-lg font-medium text-bolt-elements-textPrimary mb-4">GitHub Connection</h3>
+        <div className="flex mb-4">
+          <div className="flex-1 mr-2">
+            <label className="block text-sm text-bolt-elements-textSecondary mb-1">GitHub Username:</label>
+            <input
+              type="text"
+              value={githubUsername}
+              onChange={(e) => setGithubUsername(e.target.value)}
+              disabled={isGithubVerifying}
+              className="w-full bg-white dark:bg-bolt-elements-background-depth-4 relative px-2 py-1.5 rounded-md focus:outline-none placeholder-bolt-elements-textTertiary text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary border border-bolt-elements-borderColor disabled:opacity-50"
+            />
+          </div>
+          <div className="flex-1">
+            <label className="block text-sm text-bolt-elements-textSecondary mb-1">Personal Access Token:</label>
+            <input
+              type="password"
+              value={githubToken}
+              onChange={(e) => setGithubToken(e.target.value)}
+              disabled={isGithubVerifying}
+              className="w-full bg-white dark:bg-bolt-elements-background-depth-4 relative px-2 py-1.5 rounded-md focus:outline-none placeholder-bolt-elements-textTertiary text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary border border-bolt-elements-borderColor disabled:opacity-50"
+            />
+          </div>
         </div>
-        <div className="flex-1">
-          <label className="block text-sm text-bolt-elements-textSecondary mb-1">Personal Access Token:</label>
-          <input
-            type="password"
-            value={githubToken}
-            onChange={(e) => setGithubToken(e.target.value)}
-            disabled={isVerifying}
-            className="w-full bg-white dark:bg-bolt-elements-background-depth-4 relative px-2 py-1.5 rounded-md focus:outline-none placeholder-bolt-elements-textTertiary text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary border border-bolt-elements-borderColor disabled:opacity-50"
-          />
+        <div className="flex mb-4 items-center">
+          {!isGithubConnected ? (
+            <button
+              onClick={handleGitHubSaveConnection}
+              disabled={isGithubVerifying || !githubUsername || !githubToken}
+              className="bg-bolt-elements-button-primary-background rounded-lg px-4 py-2 mr-2 transition-colors duration-200 hover:bg-bolt-elements-button-primary-backgroundHover text-bolt-elements-button-primary-text disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            >
+              {isGithubVerifying ? (
+                <>
+                  <div className="i-ph:spinner animate-spin mr-2" />
+                  Verifying...
+                </>
+              ) : (
+                'Connect'
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={handleGitHubDisconnect}
+              className="bg-bolt-elements-button-danger-background rounded-lg px-4 py-2 mr-2 transition-colors duration-200 hover:bg-bolt-elements-button-danger-backgroundHover text-bolt-elements-button-danger-text"
+            >
+              Disconnect
+            </button>
+          )}
+          {isGithubConnected && <span className="text-green-500">✓ Connected</span>}
         </div>
       </div>
-      <div className="flex mb-4 items-center">
-        {!isConnected ? (
-          <button
-            onClick={handleSaveConnection}
-            disabled={isVerifying || !githubUsername || !githubToken}
-            className="bg-bolt-elements-button-primary-background rounded-lg px-4 py-2 mr-2 transition-colors duration-200 hover:bg-bolt-elements-button-primary-backgroundHover text-bolt-elements-button-primary-text disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-          >
-            {isVerifying ? (
-              <>
-                <div className="i-ph:spinner animate-spin mr-2" />
-                Verifying...
-              </>
-            ) : (
-              'Connect'
-            )}
-          </button>
-        ) : (
-          <button
-            onClick={handleDisconnect}
-            className="bg-bolt-elements-button-danger-background rounded-lg px-4 py-2 mr-2 transition-colors duration-200 hover:bg-bolt-elements-button-danger-backgroundHover text-bolt-elements-button-danger-text"
-          >
-            Disconnect
-          </button>
-        )}
-        {isConnected && (
-          <span className="text-sm text-green-600 flex items-center">
-            <div className="i-ph:check-circle mr-1" />
-            Connected to GitHub
-          </span>
-        )}
+
+      {/* Vercel Connection Section */}
+      <div className="p-4 border border-bolt-elements-borderColor rounded-lg bg-bolt-elements-background-depth-3">
+        <h3 className="text-lg font-medium text-bolt-elements-textPrimary mb-4">Vercel Connection</h3>
+        <div className="flex mb-4">
+          <div className="flex-1">
+            <label className="block text-sm text-bolt-elements-textSecondary mb-1">Vercel Token:</label>
+            <input
+              type="password"
+              value={vercelToken}
+              onChange={(e) => setVercelToken(e.target.value)}
+              disabled={isVercelVerifying}
+              className="w-full bg-white dark:bg-bolt-elements-background-depth-4 relative px-2 py-1.5 rounded-md focus:outline-none placeholder-bolt-elements-textTertiary text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary border border-bolt-elements-borderColor disabled:opacity-50"
+            />
+          </div>
+        </div>
+        <div className="flex mb-4 items-center">
+          {!isVercelConnected ? (
+            <button
+              onClick={handleVercelSaveConnection}
+              disabled={isVercelVerifying || !vercelToken}
+              className="bg-bolt-elements-button-primary-background rounded-lg px-4 py-2 mr-2 transition-colors duration-200 hover:bg-bolt-elements-button-primary-backgroundHover text-bolt-elements-button-primary-text disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+            >
+              {isVercelVerifying ? (
+                <>
+                  <div className="i-ph:spinner animate-spin mr-2" />
+                  Verifying...
+                </>
+              ) : (
+                'Connect'
+              )}
+            </button>
+          ) : (
+            <button
+              onClick={handleVercelDisconnect}
+              className="bg-bolt-elements-button-danger-background rounded-lg px-4 py-2 mr-2 transition-colors duration-200 hover:bg-bolt-elements-button-danger-backgroundHover text-bolt-elements-button-danger-text"
+            >
+              Disconnect
+            </button>
+          )}
+          {isVercelConnected && <span className="text-green-500">✓ Connected</span>}
+        </div>
       </div>
     </div>
   );

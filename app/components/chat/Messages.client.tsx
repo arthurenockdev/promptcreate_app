@@ -29,14 +29,14 @@ export const Messages = React.forwardRef<HTMLDivElement, MessagesProps>((props: 
   const handleFork = async (messageId: string) => {
     try {
       if (!db || !chatId.get()) {
-        toast.error('Chat persistence is not available');
+        toast.error('Chat persistence not available');
         return;
       }
 
       const urlId = await forkChat(db, chatId.get()!, messageId);
       window.location.href = `/chat/${urlId}`;
     } catch (error) {
-      toast.error('Failed to fork chat: ' + (error as Error).message);
+      toast.error('Failed to fork project: ' + (error as Error).message);
     }
   };
 

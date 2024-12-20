@@ -113,7 +113,7 @@ ${file.content}
     }
 
     importRepo(url).catch((error) => {
-      console.error('Error importing repo:', error);
+      
       toast.error('Failed to import repository');
       setLoading(false);
       window.location.href = '/';

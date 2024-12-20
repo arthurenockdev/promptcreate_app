@@ -97,20 +97,27 @@ export const ChatImpl = memo(
     const files = useStore(workbenchStore.files);
     const { activeProviders, promptId } = useSettings();
 
-    const [model, setModel] = useState(() => {
-      const savedModel = Cookies.get('selectedModel');
-      return savedModel || DEFAULT_MODEL;
+    const [model] = useState(DEFAULT_MODEL);
+    const [provider] = useState(() => {
+      return PROVIDER_LIST.find((p) => p.name === 'Google') || DEFAULT_PROVIDER;
     });
-    const [provider, setProvider] = useState(() => {
-      const savedProvider = Cookies.get('selectedProvider');
-      return PROVIDER_LIST.find((p) => p.name === savedProvider) || DEFAULT_PROVIDER;
+
+    const [apiKeys, setApiKeys] = useState<Record<string, string>>(() => {
+      const storedApiKeys = Cookies.get('apiKeys');
+      if (storedApiKeys) {
+        try {
+          return JSON.parse(storedApiKeys);
+        } catch (error) {
+          console.error('Failed to parse API keys from cookies:', error);
+          return {};
+        }
+      }
+      return {};
     });
 
     const { showChat } = useStore(chatStore);
 
     const [animationScope, animate] = useAnimate();
-
-    const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
 
     const { messages, isLoading, input, handleInputChange, setInput, stop, append } = useChat({
       api: '/api/chat',
@@ -317,24 +324,6 @@ export const ChatImpl = memo(
 
     const [messageRef, scrollRef] = useSnapScroll();
 
-    useEffect(() => {
-      const storedApiKeys = Cookies.get('apiKeys');
-
-      if (storedApiKeys) {
-        setApiKeys(JSON.parse(storedApiKeys));
-      }
-    }, []);
-
-    const handleModelChange = (newModel: string) => {
-      setModel(newModel);
-      Cookies.set('selectedModel', newModel, { expires: 30 });
-    };
-
-    const handleProviderChange = (newProvider: ProviderInfo) => {
-      setProvider(newProvider);
-      Cookies.set('selectedProvider', newProvider.name, { expires: 30 });
-    };
-
     return (
       <BaseChat
         ref={animationScope}
@@ -347,9 +336,7 @@ export const ChatImpl = memo(
         promptEnhanced={promptEnhanced}
         sendMessage={sendMessage}
         model={model}
-        setModel={handleModelChange}
         provider={provider}
-        setProvider={handleProviderChange}
         providerList={activeProviders}
         messageRef={messageRef}
         scrollRef={scrollRef}

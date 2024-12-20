@@ -174,7 +174,7 @@ export async function forkChat(db: IDBDatabase, chatId: string, messageId: strin
   const chat = await getMessages(db, chatId);
 
   if (!chat) {
-    throw new Error('Chat not found');
+    throw new Error('Project not found');
   }
 
   // Find the index of the message to fork at
@@ -194,7 +194,7 @@ export async function duplicateChat(db: IDBDatabase, id: string): Promise<string
   const chat = await getMessages(db, id);
 
   if (!chat) {
-    throw new Error('Chat not found');
+    throw new Error('Project not found');
   }
 
   return createChatFromMessages(db, `${chat.description || 'Chat'} (copy)`, chat.messages);
@@ -223,7 +223,7 @@ export async function updateChatDescription(db: IDBDatabase, id: string, descrip
   const chat = await getMessages(db, id);
 
   if (!chat) {
-    throw new Error('Chat not found');
+    throw new Error('Project not found');
   }
 
   if (!description.trim()) {

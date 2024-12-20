@@ -22,7 +22,7 @@ export default function ChatHistoryTab() {
   };
 
   const handleDeleteAllChats = async () => {
-    const confirmDelete = window.confirm('Are you sure you want to delete all chats? This action cannot be undone.');
+    const confirmDelete = window.confirm('Are you sure you want to delete all project? This action cannot be undone.');
 
     if (!confirmDelete) {
       return; // Exit if the user cancels
@@ -30,7 +30,7 @@ export default function ChatHistoryTab() {
 
     if (!db) {
       const error = new Error('Database is not available');
-      logStore.logError('Failed to delete chats - DB unavailable', error);
+      logStore.logError('Failed to delete projects - DB unavailable', error);
       toast.error('Database is not available');
 
       return;
@@ -41,12 +41,12 @@ export default function ChatHistoryTab() {
 
       const allChats = await getAll(db);
       await Promise.all(allChats.map((chat) => deleteById(db!, chat.id)));
-      logStore.logSystem('All chats deleted successfully', { count: allChats.length });
-      toast.success('All chats deleted successfully');
+      logStore.logSystem('All project deleted successfully', { count: allChats.length });
+      toast.success('All projects deleted successfully');
       navigate('/', { replace: true });
     } catch (error) {
-      logStore.logError('Failed to delete chats', error);
-      toast.error('Failed to delete chats');
+      logStore.logError('Failed to delete project', error);
+      toast.error('Failed to delete project');
       console.error(error);
     } finally {
       setIsDeleting(false);
@@ -56,7 +56,7 @@ export default function ChatHistoryTab() {
   const handleExportAllChats = async () => {
     if (!db) {
       const error = new Error('Database is not available');
-      logStore.logError('Failed to export chats - DB unavailable', error);
+      logStore.logError('Failed to export project - DB unavailable', error);
       toast.error('Database is not available');
 
       return;
@@ -70,11 +70,11 @@ export default function ChatHistoryTab() {
       };
 
       downloadAsJson(exportData, `all-chats-${new Date().toISOString()}.json`);
-      logStore.logSystem('Chats exported successfully', { count: allChats.length });
-      toast.success('Chats exported successfully');
+      logStore.logSystem('Project exported successfully', { count: allChats.length });
+      toast.success('Project exported successfully');
     } catch (error) {
-      logStore.logError('Failed to export chats', error);
-      toast.error('Failed to export chats');
+      logStore.logError('Failed to export Project', error);
+      toast.error('Failed to export Project');
       console.error(error);
     }
   };
@@ -82,7 +82,7 @@ export default function ChatHistoryTab() {
   return (
     <>
       <div className="p-4">
-        <h3 className="text-lg font-medium text-bolt-elements-textPrimary mb-4">Chat History</h3>
+        <h3 className="text-lg font-medium text-bolt-elements-textPrimary mb-4">All Projects</h3>
         <button
           onClick={handleExportAllChats}
           className={classNames(
@@ -92,7 +92,7 @@ export default function ChatHistoryTab() {
             'text-bolt-elements-button-primary-text',
           )}
         >
-          Export All Chats
+          Export All Project
         </button>
 
         <div
@@ -110,7 +110,7 @@ export default function ChatHistoryTab() {
               'text-bolt-elements-button-danger-text',
             )}
           >
-            {isDeleting ? 'Deleting...' : 'Delete All Chats'}
+            {isDeleting ? 'Deleting...' : 'Delete All Project'}
           </button>
         </div>
       </div>

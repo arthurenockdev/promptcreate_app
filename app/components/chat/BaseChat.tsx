@@ -24,12 +24,12 @@ import GitCloneButton from './GitCloneButton';
 
 import FilePreview from './FilePreview';
 import { ModelSelector } from '~/components/chat/ModelSelector';
-import { SpeechRecognitionButton } from '~/components/chat/SpeechRecognition';
+//import { SpeechRecognitionButton } from '~/components/chat/SpeechRecognition';
 import type { IProviderSetting, ProviderInfo } from '~/types/model';
 import { ScreenshotStateManager } from './ScreenshotStateManager';
 import { toast } from 'react-toastify';
 
-const TEXTAREA_MIN_HEIGHT = 76;
+const TEXTAREA_MIN_HEIGHT = 70;
 
 interface BaseChatProps {
   textareaRef?: React.RefObject<HTMLTextAreaElement> | undefined;
@@ -92,7 +92,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     },
     ref,
   ) => {
-    const TEXTAREA_MAX_HEIGHT = chatStarted ? 400 : 200;
+    const TEXTAREA_MAX_HEIGHT = chatStarted ? 300 : 100;
     const [apiKeys, setApiKeys] = useState<Record<string, string>>(() => {
       const savedKeys = Cookies.get('apiKeys');
 
@@ -100,7 +100,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         try {
           return JSON.parse(savedKeys);
         } catch (error) {
-          console.error('Failed to parse API keys from cookies:', error);
+          
           return {};
         }
       }
@@ -130,7 +130,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           }
         }
       } catch (error) {
-        console.error('Error loading API keys from cookies:', error);
+        
 
         // Clear invalid cookie data
         Cookies.remove('apiKeys');
@@ -149,7 +149,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           }
         }
       } catch (error) {
-        console.error('Error loading Provider Settings from cookies:', error);
+        
 
         // Clear invalid cookie data
         Cookies.remove('providers');
@@ -287,9 +287,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full')}>
             {!chatStarted && (
               <div id="intro" className="mt-[16vh] max-w-chat mx-auto text-center px-4 lg:px-0">
-                <h1 className="text-3xl lg:text-6xl font-bold text-bolt-elements-textPrimary mb-4 animate-fade-in">
-                  Where ideas begin
-                </h1>
+                
                 <p className="text-md lg:text-xl mb-8 text-bolt-elements-textSecondary animate-fade-in animation-delay-200">
                   Bring ideas to life in seconds or get help on existing projects.
                 </p>
@@ -320,32 +318,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                   },
                 )}
               >
-                <svg className={classNames(styles.PromptEffectContainer)}>
-                  <defs>
-                    <linearGradient
-                      id="line-gradient"
-                      x1="20%"
-                      y1="0%"
-                      x2="-14%"
-                      y2="10%"
-                      gradientUnits="userSpaceOnUse"
-                      gradientTransform="rotate(-45)"
-                    >
-                      <stop offset="0%" stopColor="#b44aff" stopOpacity="0%"></stop>
-                      <stop offset="40%" stopColor="#b44aff" stopOpacity="80%"></stop>
-                      <stop offset="50%" stopColor="#b44aff" stopOpacity="80%"></stop>
-                      <stop offset="100%" stopColor="#b44aff" stopOpacity="0%"></stop>
-                    </linearGradient>
-                    <linearGradient id="shine-gradient">
-                      <stop offset="0%" stopColor="white" stopOpacity="0%"></stop>
-                      <stop offset="40%" stopColor="#ffffff" stopOpacity="80%"></stop>
-                      <stop offset="50%" stopColor="#ffffff" stopOpacity="80%"></stop>
-                      <stop offset="100%" stopColor="white" stopOpacity="0%"></stop>
-                    </linearGradient>
-                  </defs>
-                  <rect className={classNames(styles.PromptEffectLine)} pathLength="100" strokeLinecap="round"></rect>
-                  <rect className={classNames(styles.PromptShine)} x="48" y="24" width="70" height="1"></rect>
-                </svg>
+               
                 <div>
                   <div className={isModelSettingsCollapsed ? 'hidden' : ''}>
                     <ModelSelector
@@ -461,7 +434,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       minHeight: TEXTAREA_MIN_HEIGHT,
                       maxHeight: TEXTAREA_MAX_HEIGHT,
                     }}
-                    placeholder="How can Bolt help you today?"
+                    placeholder="What do you want to build?"
                     translate="no"
                   />
                   <ClientOnly>
@@ -504,12 +477,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         )}
                       </IconButton>
 
-                      <SpeechRecognitionButton
-                        isListening={isListening}
-                        onStart={startListening}
-                        onStop={stopListening}
-                        disabled={isStreaming}
-                      />
+                      
                       {chatStarted && <ClientOnly>{() => <ExportChatButton exportChat={exportChat} />}</ClientOnly>}
                       <IconButton
                         title="Model Settings"
@@ -558,6 +526,6 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       </div>
     );
 
-    return <Tooltip.Provider delayDuration={200}>{baseChat}</Tooltip.Provider>;
+    return <Tooltip.Provider delayDuration={250}>{baseChat}</Tooltip.Provider>;
   },
 );

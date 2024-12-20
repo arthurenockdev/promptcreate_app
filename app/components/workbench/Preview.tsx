@@ -38,7 +38,7 @@ export const Preview = memo(() => {
   });
 
   // Define the scaling factor
-  const SCALING_FACTOR = 2; // Adjust this value to increase/decrease sensitivity
+  const SCALING_FACTOR = 3; // Adjust this value to increase/decrease sensitivity
 
   useEffect(() => {
     if (!activePreview) {
@@ -265,7 +265,7 @@ export const Preview = memo(() => {
         <IconButton
           icon="i-ph:devices"
           onClick={toggleDeviceMode}
-          title={isDeviceModeOn ? 'Switch to Responsive Mode' : 'Switch to Device Mode'}
+          title={isDeviceModeOn ? 'Responsive Mode' : 'Device Mode'}
         />
 
         {/* Fullscreen toggle button */}
@@ -303,7 +303,7 @@ export const Preview = memo(() => {
               />
             </>
           ) : (
-            <div className="flex w-full h-full justify-center items-center bg-white">No preview available</div>
+            <div className="flex w-full h-full justify-center items-center bg-white">Preview unavailable</div>
           )}
 
           {isDeviceModeOn && (

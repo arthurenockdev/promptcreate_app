@@ -17,6 +17,7 @@ import { extractRelativePath } from '~/utils/diff';
 import { description } from '~/lib/persistence';
 import Cookies from 'js-cookie';
 import { createSampler } from '~/utils/sampler';
+import { toast } from 'react-toastify';
 
 export interface ArtifactState {
   id: string;
@@ -31,6 +32,46 @@ export type ArtifactUpdateState = Pick<ArtifactState, 'title' | 'closed'>;
 type Artifacts = MapStore<Record<string, ArtifactState>>;
 
 export type WorkbenchViewType = 'code' | 'preview';
+
+interface VercelDeployOptions {
+  fromGithub?: boolean;
+  githubRepo?: string;
+}
+
+interface VercelDeploymentFile {
+  file: string;
+  data: string;
+}
+
+interface VercelDeploymentData {
+  name: string;
+  files?: VercelDeploymentFile[];
+  framework?: string | null;
+  gitSource?: {
+    type: string;
+    repo: string;
+    ref: string;
+  };
+}
+
+interface VercelDeploymentResponse {
+  id: string;
+  url: string;
+  name: string;
+  state: 'INITIALIZING' | 'BUILDING' | 'ERROR' | 'READY';
+  errorMessage?: string;
+}
+
+interface VercelErrorResponse {
+  error: {
+    message: string;
+    code: string;
+  };
+}
+
+interface VercelStatusResponse {
+  status: 'INITIALIZING' | 'BUILDING' | 'ERROR' | 'READY';
+}
 
 export class WorkbenchStore {
   #previewsStore = new PreviewsStore(webcontainer);
@@ -387,7 +428,7 @@ export class WorkbenchStore {
         const pathSegments = relativePath.split('/');
         let currentHandle = targetHandle;
 
-        for (let i = 0; i < pathSegments.length - 1; i++) {
+        for (let i = 0; i <pathSegments.length - 1; i++) {
           currentHandle = await currentHandle.getDirectoryHandle(pathSegments[i], { create: true });
         }
 
@@ -432,8 +473,7 @@ export class WorkbenchStore {
           // Repository doesn't exist, so create a new one
           const { data: newRepo } = await octokit.repos.createForAuthenticatedUser({
             name: repoName,
-            private: false,
-            auto_init: true,
+            private: false, // or false, depending on your needs
           });
           repo = newRepo;
         } else {
@@ -516,6 +556,131 @@ export class WorkbenchStore {
       throw error; // Rethrow the error for further handling
     }
   }
-}
 
+  async createGitHubRepo(repoName: string) {
+    const githubToken = Cookies.get('githubToken');
+    const octokit = new Octokit({ auth: githubToken });
+
+    try {
+      const response = await octokit.rest.repos.createForAuthenticatedUser({
+        name: repoName,
+        private: true, // or false, depending on your needs
+      });
+      toast.success(`Repository ${response.data.full_name} created successfully!`);
+    } catch (error) {
+      console.error('Error creating GitHub repository:', error);
+      toast.error('Failed to create GitHub repository');
+    }
+  }
+
+  async deployToVercel(projectName: string, options: VercelDeployOptions = {}) {
+    try {
+      const vercelToken = Cookies.get('vercelToken');
+      if (!vercelToken) {
+        throw new Error('Vercel token not found. Please connect your Vercel account in Settings.');
+      }
+
+      const files = this.files.get();
+      if (!files || Object.keys(files).length === 0) {
+        throw new Error('No files found to deploy');
+      }
+
+      // Prepare deployment files with content
+      const deploymentFiles = await Promise.all(
+        Object.entries(files).map(async ([filePath, dirent]) => {
+          if (dirent?.type === 'file') {
+            const relativePath = extractRelativePath(filePath);
+            return {
+              file: relativePath,
+              data: dirent.content || '',
+            };
+          }
+          return null;
+        })
+      );
+
+      const validFiles = deploymentFiles.filter((f): f is VercelDeploymentFile => f !== null);
+
+      if (validFiles.length === 0) {
+        throw new Error('No valid files to deploy');
+      }
+
+      let deploymentData: VercelDeploymentData = {
+        name: projectName,
+        framework: null, // Let Vercel auto-detect the framework
+      };
+
+      if (options.fromGithub && options.githubRepo) {
+        deploymentData = {
+          name: projectName,
+          gitSource: {
+            type: 'github',
+            repo: options.githubRepo,
+            ref: 'main'
+          }
+        };
+      } else {
+        deploymentData.files = validFiles;
+      }
+
+      // Make the deployment request to Vercel
+      const response = await fetch('https://api.vercel.com/v12/deployments', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${vercelToken}`,
+        },
+        body: JSON.stringify(deploymentData),
+      });
+
+      if (!response.ok) {
+        const errorData = (await response.json()) as VercelErrorResponse;
+        throw new Error(errorData.error?.message || 'Failed to deploy to Vercel');
+      }
+
+      const deploymentResponse = (await response.json()) as VercelDeploymentResponse;
+      
+      // Show initial success toast with the deployment URL
+      const deploymentUrl = deploymentResponse.url || `https://${projectName}.vercel.app`;
+      toast.success(`Deployment started! URL: ${deploymentUrl}`);
+
+      // Poll for deployment status
+      const checkStatus = async (): Promise<VercelDeploymentResponse> => {
+        const statusResponse = await fetch(`https://api.vercel.com/v12/deployments/${deploymentResponse.id}`, {
+          headers: {
+            Authorization: `Bearer ${vercelToken}`,
+          },
+        });
+
+        if (!statusResponse.ok) {
+          throw new Error('Failed to check deployment status');
+        }
+
+        return statusResponse.json();
+      };
+
+      // Initial status check
+      let status = await checkStatus();
+      
+      // Poll for status changes
+      while (status.state === 'INITIALIZING' || status.state === 'BUILDING') {
+        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds between checks
+        status = await checkStatus();
+      }
+
+      if (status.state === 'READY') {
+        toast.success(`Deployment completed successfully! Visit: ${deploymentUrl}`);
+        return { url: deploymentUrl };
+      } else if (status.state === 'ERROR') {
+        throw new Error('Deployment failed: ' + (status.errorMessage || 'Unknown error'));
+      }
+
+      return { url: deploymentUrl };
+    } catch (error) {
+      console.error('Error deploying to Vercel:', error);
+      toast.error(error instanceof Error ? error.message : 'Failed to deploy to Vercel');
+      throw error;
+    }
+  }
+}
 export const workbenchStore = new WorkbenchStore();

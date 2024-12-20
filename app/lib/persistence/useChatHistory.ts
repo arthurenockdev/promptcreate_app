@@ -72,7 +72,7 @@ export function useChatHistory() {
           setReady(true);
         })
         .catch((error) => {
-          logStore.logError('Failed to load chat messages', error);
+          logStore.logError('Failed to load project messages', error);
           toast.error(error.message);
         });
     }
@@ -119,9 +119,9 @@ export function useChatHistory() {
       try {
         const newId = await duplicateChat(db, mixedId || listItemId);
         navigate(`/chat/${newId}`);
-        toast.success('Chat duplicated successfully');
+        toast.success('project duplicated successfully');
       } catch (error) {
-        toast.error('Failed to duplicate chat');
+        toast.error('Failed to duplicate project');
         console.log(error);
       }
     },
@@ -133,12 +133,12 @@ export function useChatHistory() {
       try {
         const newId = await createChatFromMessages(db, description, messages);
         window.location.href = `/chat/${newId}`;
-        toast.success('Chat imported successfully');
+        toast.success('project imported successfully');
       } catch (error) {
         if (error instanceof Error) {
-          toast.error('Failed to import chat: ' + error.message);
+          toast.error('Failed to import project: ' + error.message);
         } else {
-          toast.error('Failed to import chat');
+          toast.error('Failed to import project');
         }
       }
     },
