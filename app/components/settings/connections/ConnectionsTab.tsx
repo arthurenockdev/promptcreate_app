@@ -31,6 +31,7 @@ export default function ConnectionsTab() {
     if (githubUsername && githubToken) {
       verifyGitHubCredentials();
     }
+
     // Check Vercel credentials
     if (vercelToken) {
       verifyVercelCredentials();
@@ -58,10 +59,12 @@ export default function ConnectionsTab() {
       }
 
       setIsGithubConnected(false);
+
       return false;
     } catch (error) {
       console.error('Error verifying GitHub credentials:', error);
       setIsGithubConnected(false);
+
       return false;
     } finally {
       setIsGithubVerifying(false);
@@ -81,6 +84,7 @@ export default function ConnectionsTab() {
 
       if (response.ok) {
         const data = (await response.json()) as VercelUserResponse;
+
         if (data.user.username) {
           setIsVercelConnected(true);
           return true;
@@ -88,9 +92,9 @@ export default function ConnectionsTab() {
       }
 
       setIsVercelConnected(false);
+
       return false;
     } catch (error) {
-      
       setIsVercelConnected(false);
       return false;
     } finally {

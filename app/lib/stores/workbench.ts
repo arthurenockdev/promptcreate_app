@@ -428,7 +428,7 @@ export class WorkbenchStore {
         const pathSegments = relativePath.split('/');
         let currentHandle = targetHandle;
 
-        for (let i = 0; i <pathSegments.length - 1; i++) {
+        for (let i = 0; i < pathSegments.length - 1; i++) {
           currentHandle = await currentHandle.getDirectoryHandle(pathSegments[i], { create: true });
         }
 
@@ -576,11 +576,13 @@ export class WorkbenchStore {
   async deployToVercel(projectName: string, options: VercelDeployOptions = {}) {
     try {
       const vercelToken = Cookies.get('vercelToken');
+
       if (!vercelToken) {
         throw new Error('Vercel token not found. Please connect your Vercel account in Settings.');
       }
 
       const files = this.files.get();
+
       if (!files || Object.keys(files).length === 0) {
         throw new Error('No files found to deploy');
       }
@@ -595,8 +597,9 @@ export class WorkbenchStore {
               data: dirent.content || '',
             };
           }
+
           return null;
-        })
+        }),
       );
 
       const validFiles = deploymentFiles.filter((f): f is VercelDeploymentFile => f !== null);
@@ -616,8 +619,8 @@ export class WorkbenchStore {
           gitSource: {
             type: 'github',
             repo: options.githubRepo,
-            ref: 'main'
-          }
+            ref: 'main',
+          },
         };
       } else {
         deploymentData.files = validFiles;
@@ -639,7 +642,7 @@ export class WorkbenchStore {
       }
 
       const deploymentResponse = (await response.json()) as VercelDeploymentResponse;
-      
+
       // Show initial success toast with the deployment URL
       const deploymentUrl = deploymentResponse.url || `https://${projectName}.vercel.app`;
       toast.success(`Deployment started! URL: ${deploymentUrl}`);
@@ -661,10 +664,10 @@ export class WorkbenchStore {
 
       // Initial status check
       let status = await checkStatus();
-      
+
       // Poll for status changes
       while (status.state === 'INITIALIZING' || status.state === 'BUILDING') {
-        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds between checks
+        await new Promise((resolve) => setTimeout(resolve, 5000)); // Wait 5 seconds between checks
         status = await checkStatus();
       }
 

@@ -87,8 +87,6 @@ async function chatAction({ context, request }: ActionFunctionArgs) {
 
         const switchesLeft = MAX_RESPONSE_SEGMENTS - stream.switches;
 
-        
-
         messages.push({ role: 'assistant', content });
         messages.push({ role: 'user', content: CONTINUE_PROMPT });
 

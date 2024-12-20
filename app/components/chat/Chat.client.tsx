@@ -104,6 +104,7 @@ export const ChatImpl = memo(
 
     const [apiKeys, setApiKeys] = useState<Record<string, string>>(() => {
       const storedApiKeys = Cookies.get('apiKeys');
+
       if (storedApiKeys) {
         try {
           return JSON.parse(storedApiKeys);
@@ -112,6 +113,7 @@ export const ChatImpl = memo(
           return {};
         }
       }
+
       return {};
     });
 

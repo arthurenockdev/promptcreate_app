@@ -32,6 +32,7 @@ export function VercelDeployModal({ isOpen, onClose }: VercelDeployModalProps) {
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+
     switch (name) {
       case 'projectName':
         setProjectName(value);
@@ -59,8 +60,10 @@ export function VercelDeployModal({ isOpen, onClose }: VercelDeployModalProps) {
     }
 
     setIsDeploying(true);
+
     try {
       let deploymentResult;
+
       switch (deploymentType) {
         case 'direct':
           deploymentResult = await workbenchStore.deployToVercel(projectName);
@@ -68,20 +71,22 @@ export function VercelDeployModal({ isOpen, onClose }: VercelDeployModalProps) {
         case 'new-github':
           // First push to GitHub
           await workbenchStore.pushToGitHub(projectName);
+
           // Then deploy from GitHub
           deploymentResult = await workbenchStore.deployToVercel(projectName, { fromGithub: true });
           break;
         case 'existing-github':
           // Clone the repo first
           await gitClone(githubRepo);
+
           // Then deploy from the cloned repo
-          deploymentResult = await workbenchStore.deployToVercel(projectName, { 
+          deploymentResult = await workbenchStore.deployToVercel(projectName, {
             fromGithub: true,
-            githubRepo: githubRepo 
+            githubRepo,
           });
           break;
       }
-      
+
       // Only close the modal if deployment started successfully
       if (deploymentResult?.url) {
         onClose();
@@ -122,9 +127,7 @@ export function VercelDeployModal({ isOpen, onClose }: VercelDeployModalProps) {
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm text-bolt-elements-textSecondary mb-2">
-                    Deployment Type:
-                  </label>
+                  <label className="block text-sm text-bolt-elements-textSecondary mb-2">Deployment Type:</label>
                   <div className="space-y-2">
                     <label className="flex items-center">
                       <input
@@ -163,9 +166,7 @@ export function VercelDeployModal({ isOpen, onClose }: VercelDeployModalProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-bolt-elements-textSecondary mb-2">
-                    Project Name:
-                  </label>
+                  <label className="block text-sm text-bolt-elements-textSecondary mb-2">Project Name:</label>
                   <input
                     type="text"
                     name="projectName"
@@ -204,13 +205,18 @@ export function VercelDeployModal({ isOpen, onClose }: VercelDeployModalProps) {
                   </button>
                   <button
                     onClick={handleDeploy}
-                    disabled={isDeploying || !projectName.trim() || (deploymentType === 'existing-github' && !githubRepo.trim())}
+                    disabled={
+                      isDeploying || !projectName.trim() || (deploymentType === 'existing-github' && !githubRepo.trim())
+                    }
                     className={classNames(
                       'bg-bolt-elements-button-primary-background px-4 py-2 rounded-md text-bolt-elements-button-primary-text transition-colors flex items-center gap-2',
                       {
                         'hover:bg-bolt-elements-button-primary-backgroundHover': !isDeploying,
-                        'opacity-50 cursor-not-allowed': isDeploying || !projectName.trim() || (deploymentType === 'existing-github' && !githubRepo.trim()),
-                      }
+                        'opacity-50 cursor-not-allowed':
+                          isDeploying ||
+                          !projectName.trim() ||
+                          (deploymentType === 'existing-github' && !githubRepo.trim()),
+                      },
                     )}
                   >
                     {isDeploying ? (
@@ -227,11 +233,7 @@ export function VercelDeployModal({ isOpen, onClose }: VercelDeployModalProps) {
             </div>
 
             <RadixDialog.Close asChild>
-              <IconButton
-                icon="i-ph:x"
-                className="absolute top-[10px] right-[10px]"
-                onClick={onClose}
-              />
+              <IconButton icon="i-ph:x" className="absolute top-[10px] right-[10px]" onClick={onClose} />
             </RadixDialog.Close>
           </motion.div>
         </RadixDialog.Content>

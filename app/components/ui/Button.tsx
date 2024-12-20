@@ -12,14 +12,14 @@ interface ButtonProps {
 }
 
 export const Button = memo(
-  ({ 
-    className, 
-    disabledClassName, 
-    disabled = false, 
-    active = false, 
-    children, 
+  ({
+    className,
+    disabledClassName,
+    disabled = false,
+    active = false,
+    children,
     onClick,
-    type = 'button'
+    type = 'button',
   }: ButtonProps) => {
     return (
       <button
@@ -37,6 +37,7 @@ export const Button = memo(
           if (disabled) {
             return;
           }
+
           onClick?.(event);
         }}
       >

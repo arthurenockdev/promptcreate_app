@@ -24,6 +24,7 @@ import GitCloneButton from './GitCloneButton';
 
 import FilePreview from './FilePreview';
 import { ModelSelector } from '~/components/chat/ModelSelector';
+
 //import { SpeechRecognitionButton } from '~/components/chat/SpeechRecognition';
 import type { IProviderSetting, ProviderInfo } from '~/types/model';
 import { ScreenshotStateManager } from './ScreenshotStateManager';
@@ -100,7 +101,6 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         try {
           return JSON.parse(savedKeys);
         } catch (error) {
-          
           return {};
         }
       }
@@ -130,8 +130,6 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           }
         }
       } catch (error) {
-        
-
         // Clear invalid cookie data
         Cookies.remove('apiKeys');
       }
@@ -149,8 +147,6 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           }
         }
       } catch (error) {
-        
-
         // Clear invalid cookie data
         Cookies.remove('providers');
       }
@@ -287,7 +283,6 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full')}>
             {!chatStarted && (
               <div id="intro" className="mt-[16vh] max-w-chat mx-auto text-center px-4 lg:px-0">
-                
                 <p className="text-md lg:text-xl mb-8 text-bolt-elements-textSecondary animate-fade-in animation-delay-200">
                   Bring ideas to life in seconds or get help on existing projects.
                 </p>
@@ -318,7 +313,6 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                   },
                 )}
               >
-               
                 <div>
                   <div className={isModelSettingsCollapsed ? 'hidden' : ''}>
                     <ModelSelector
@@ -477,7 +471,6 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         )}
                       </IconButton>
 
-                      
                       {chatStarted && <ClientOnly>{() => <ExportChatButton exportChat={exportChat} />}</ClientOnly>}
                       <IconButton
                         title="Model Settings"

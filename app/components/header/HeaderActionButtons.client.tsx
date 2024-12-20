@@ -33,7 +33,6 @@ export function HeaderActionButtons({}: HeaderActionButtonsProps) {
       await workbenchStore.syncFiles(directoryHandle);
       toast.success('Files synced successfully');
     } catch (error) {
-      
       toast.error('Failed to sync files');
     } finally {
       setIsSyncing(false);
@@ -100,6 +99,7 @@ export function HeaderActionButtons({}: HeaderActionButtonsProps) {
                   'Enter a name for your new GitHub repository:',
                   'promptcreate-generated-project',
                 );
+
                 if (repoName) {
                   workbenchStore.createGitHubRepo(repoName);
                 }
@@ -112,12 +112,15 @@ export function HeaderActionButtons({}: HeaderActionButtonsProps) {
               className="mr-1 text-sm"
               onClick={async () => {
                 setIsVercelChecking(true);
+
                 try {
                   const vercelToken = Cookies.get('vercelToken');
+
                   if (!vercelToken) {
                     toast.error('Connect your Vercel account in Settings first');
                     return;
                   }
+
                   setShowVercelModal(true);
                 } finally {
                   setIsVercelChecking(false);

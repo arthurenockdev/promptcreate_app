@@ -319,7 +319,7 @@ const PROVIDER_LIST: ProviderInfo[] = [
   },
 ];
 
-export const DEFAULT_PROVIDER = PROVIDER_LIST.find(p => p.name === 'Google') || PROVIDER_LIST[0];
+export const DEFAULT_PROVIDER = PROVIDER_LIST.find((p) => p.name === 'Google') || PROVIDER_LIST[0];
 
 const staticModels: ModelInfo[] = PROVIDER_LIST.map((p) => p.staticModels).flat();
 
@@ -378,7 +378,6 @@ async function getTogetherModels(apiKeys?: Record<string, string>, settings?: IP
       maxTokenAllowed: 8000,
     }));
   } catch (e) {
-    
     return [];
   }
 }
@@ -448,7 +447,6 @@ async function getOpenAILikeModels(
       provider: 'OpenAILike',
     }));
   } catch (e) {
-    
     return [];
   }
 }
